@@ -4,3 +4,5 @@
 *.hex
 *.bin
 *.map
+
+env.h
