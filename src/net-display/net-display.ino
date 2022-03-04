@@ -1,21 +1,17 @@
 #include <SPI.h>
 #include <WiFiNINA.h>
 #include "Adafruit_ThinkInk.h"
-#include "Adafruit_DotStar.h"
 
 #include "board-layout.h"
 #include "env.h"
 
-const uint32_t C_BOOTING = Adafruit_DotStar::Color(0, 0, 255);
-const uint32_t C_FAILED = Adafruit_DotStar::Color(255, 0, 0);
-const uint32_t C_IDLE = Adafruit_DotStar::Color(100, 50, 200);
-const uint32_t C_WORKING = Adafruit_DotStar::Color(0, 255, 0);
+#include "mc.h"
 
 const unsigned int MIN_MESSAGE_DISPLAY_WAIT = 3000;
 const unsigned int MIN_NOMESSAGE_DISPLAY_WAIT = 10000;
 const unsigned int MIN_RECONNECT_WAIT = 10000;
 
-Adafruit_DotStar dot(1, DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
+netdisplay::Mc mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
 
 WiFiServer server(8081);
 
@@ -57,46 +53,47 @@ enum EConnectionChange {
 
 void setup(void) {
   Serial.begin(9600);
-  dot.begin();
-
-  dot.setBrightness(50);
-  dot.setPixelColor(0, C_BOOTING);
-  dot.show();
 
   for (unsigned int i = 0; i < 500; i++) {
-    unsigned char based = i % 100;
-    unsigned char brightness = based > 50 ? 50 - (based - 50) : based;
-    dot.setBrightness(brightness);
-    dot.show();
+    mc.booting(i);
     delay(10);
   }
 
+  mc.ok();
+  delay(500);
+
+  mc.working();
   display.begin(THINKINK_MONO);
+
+  mc.ok();
+  delay(500);
+
+  mc.working();
   WiFi.setPins(WIFI_CS_PIN, WIFI_BUSY_PIN, WIFI_RESET_PIN, WIFI_GPIO_PIN, &SPI);
 
+  mc.ok();
+  delay(500);
+
+  mc.working();
   while (WiFi.status() == WL_NO_MODULE) {
-    dot.setPixelColor(0, C_FAILED);
-    dot.show();
+    mc.failed();
     delay(1000);
   }
 
-  dot.clear();
-  dot.setBrightness(20);
-  dot.setPixelColor(0, C_WORKING);
-  dot.show();
+  mc.ok();
+  delay(500);
+
+  mc.working();
   
   byte mac[6];
   String fv = WiFi.firmwareVersion();
   WiFi.macAddress(mac);
 
-  WiFi.disconnect();
   display.clearBuffer();
   display.setTextSize(3);
   display.setTextColor(EPD_BLACK);
-
   display.setCursor(0, 0);
   display.print(fv);
-
   display.setTextSize(2);
   display.setCursor(0, 28);
   display.print("MAC: ");
@@ -111,11 +108,10 @@ void setup(void) {
   display.print(mac[1],HEX);
   display.print(":");
   display.println(mac[0],HEX);
-
   display.display();
 
-  dot.setPixelColor(0, C_IDLE);
-  dot.show();
+  mc.ok();
+  delay(500);
 }
 
 void loop(void) {
@@ -235,11 +231,7 @@ void loop(void) {
 }
 
 EConnectionChange attemptConnect(void) {
-  dot.setPixelColor(0, C_WORKING);
-  dot.show();
-
   //  Start by scanning for networks that match the SSID configured from our 'env.h' file.
-
   display.clearBuffer();
   display.setTextSize(3);
   display.setCursor(0, (display.height() - 24)/2);
@@ -247,6 +239,7 @@ EConnectionChange attemptConnect(void) {
   display.print("Scanning...");
   display.display();
 
+  mc.working();
   unsigned long before = millis();
   int count = WiFi.scanNetworks();
   unsigned long after = millis();
@@ -256,20 +249,19 @@ EConnectionChange attemptConnect(void) {
   display.setTextColor(EPD_BLACK);
 
   display.setCursor(0, 0);
-  display.print("dt:");
+  display.print("scan time:");
   display.print(after - before);
 
   // Start by scanning for networks that match the SSID configured from our 'env.h' file.
-  
   if (count < 1) {
-    dot.setPixelColor(0, C_FAILED);
-    dot.show();
-
+    mc.failed();
     display.setCursor(0, (display.height() - 24)/2);
     display.print("Disconnected.");
     display.display();
     return EConnectionChange::UnchangedDisconnect;
   }
+
+  mc.ok();
 
   for (unsigned char i = 0; i < 255 && i < count; i++) {
     auto ssid = WiFi.SSID(i);
@@ -280,8 +272,6 @@ EConnectionChange attemptConnect(void) {
     }
 
     // At this point, we have a matching ssid, attempt to connect.
-    dot.setPixelColor(0, C_IDLE);
-    dot.show();
     display.setCursor(0, (display.height() - 24)/2);
     display.print(i);
     display.print(": ");
@@ -293,6 +283,7 @@ EConnectionChange attemptConnect(void) {
 
     // Matching SSID connection loop.
     do {
+      mc.working();
       current_status = WiFi.begin(ssid, JOY_WIFI_PASSWORD);
 
       if (current_status != WL_CONNECTED) {
@@ -302,6 +293,7 @@ EConnectionChange attemptConnect(void) {
         display.print(attempt);
         display.display();
       } else {
+        mc.ok();
         // Here, we have successfully connected, drop out of the connection loop.
         break;
       }
@@ -326,6 +318,7 @@ EConnectionChange attemptConnect(void) {
   // If no connection attempts were made (we've exhausted our ssid count w/o finding a match),
   // update the display and bow out.
 
+  mc.failed();
   display.clearBuffer();
   display.setCursor(0, (display.height() - 24)/2);
   display.print("SSID Not Found.");

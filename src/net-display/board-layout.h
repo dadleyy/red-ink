@@ -1,3 +1,6 @@
+#ifndef _BOARD_LAYOUT_H
+#define _BOARD_LAYOUT_H 1
+
 #define WIFI_CS_PIN    A2
 #define WIFI_RESET_PIN A4
 #define WIFI_BUSY_PIN  A3
@@ -11,3 +14,5 @@
 
 #define DOTSTAR_DATA_PIN  8
 #define DOTSTAR_CLOCK_PIN 6
+
+#endif
