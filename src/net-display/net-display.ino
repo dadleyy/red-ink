@@ -65,6 +65,14 @@ void setup(void) {
   mc.working();
   display.begin(THINKINK_MONO);
 
+  display.setTextColor(EPD_BLACK);
+  display.setTextSize(2);
+
+  display.clearBuffer();
+  display.setCursor(0, 0);
+  display.print("Preparing WiFi...");
+  display.display();
+
   mc.ok();
   delay(500);
 
@@ -90,12 +98,8 @@ void setup(void) {
   WiFi.macAddress(mac);
 
   display.clearBuffer();
-  display.setTextSize(3);
-  display.setTextColor(EPD_BLACK);
   display.setCursor(0, 0);
-  display.print(fv);
-  display.setTextSize(2);
-  display.setCursor(0, 28);
+  display.println(fv);
   display.print("MAC: ");
   display.print(mac[5],HEX);
   display.print(":");
@@ -133,7 +137,6 @@ void loop(void) {
   if (frame.last_client_message_time > 0 && now - frame.last_client_message_time > MIN_MESSAGE_DISPLAY_WAIT) {
     display.clearBuffer();
     display.setCursor(0, 0);
-    display.setTextSize(2);
     display.print(frame.last_client_message);
     display.display();
 
@@ -158,7 +161,6 @@ void loop(void) {
     if (frame.last_display_time > 0 && millis() - frame.last_display_time > MIN_NOMESSAGE_DISPLAY_WAIT) {
       if (frame.last_client_status == 1) {
         display.clearBuffer();
-        display.setTextSize(3);
         display.setCursor(0, 0);
         display.print("No Client");
         display.display();
@@ -233,9 +235,7 @@ void loop(void) {
 EConnectionChange attemptConnect(void) {
   //  Start by scanning for networks that match the SSID configured from our 'env.h' file.
   display.clearBuffer();
-  display.setTextSize(3);
-  display.setCursor(0, (display.height() - 24)/2);
-  display.setTextColor(EPD_BLACK);
+  display.setCursor(0, 0);
   display.print("Scanning...");
   display.display();
 
@@ -245,18 +245,16 @@ EConnectionChange attemptConnect(void) {
   unsigned long after = millis();
 
   display.clearBuffer();
-  display.setTextSize(3);
-  display.setTextColor(EPD_BLACK);
-
   display.setCursor(0, 0);
   display.print("scan time:");
-  display.print(after - before);
+  display.println(after - before);
 
   // Start by scanning for networks that match the SSID configured from our 'env.h' file.
   if (count < 1) {
     mc.failed();
-    display.setCursor(0, (display.height() - 24)/2);
-    display.print("Disconnected.");
+    display.clearBuffer();
+    display.setCursor(0, 0);
+    display.println("Disconnected.");
     display.display();
     return EConnectionChange::UnchangedDisconnect;
   }
@@ -272,10 +270,11 @@ EConnectionChange attemptConnect(void) {
     }
 
     // At this point, we have a matching ssid, attempt to connect.
-    display.setCursor(0, (display.height() - 24)/2);
+    display.clearBuffer();
+    display.setCursor(0, 0);
     display.print(i);
     display.print(": ");
-    display.print(WiFi.SSID(i));
+    display.println(WiFi.SSID(i));
     display.display();
 
     unsigned char attempt = 0;
@@ -290,7 +289,7 @@ EConnectionChange attemptConnect(void) {
         display.clearBuffer();
         display.setCursor(0, 0);
         display.print("Failed on #");
-        display.print(attempt);
+        display.println(attempt);
         display.display();
       } else {
         mc.ok();
@@ -303,11 +302,11 @@ EConnectionChange attemptConnect(void) {
 
     // At this point, we found the matching connection loop and have attempted to connect.
     display.clearBuffer();
-    display.setCursor(0, (display.height() - 24)/2);
+    display.setCursor(0, 0);
     if (current_status == WL_CONNECTED) {
-      display.print("Connected!");
+      display.println("Connected!");
     } else {
-      display.print("Failed Connect");
+      display.println("Failed Connect");
     }
     display.display();
     return current_status == WL_CONNECTED
@@ -320,8 +319,8 @@ EConnectionChange attemptConnect(void) {
 
   mc.failed();
   display.clearBuffer();
-  display.setCursor(0, (display.height() - 24)/2);
-  display.print("SSID Not Found.");
+  display.setCursor(0, 0);
+  display.println("SSID Not Found.");
   display.display();
   return EConnectionChange::UnchangedDisconnect;
 }
