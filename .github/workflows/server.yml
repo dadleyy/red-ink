@@ -68,4 +68,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: "./redink-server-armv7-unknown-linux-gnueabihf-${{ github.sha }}.tar.gz"
+          files: "./src/redink-srv/redink-server-armv7-unknown-linux-gnueabihf-${{ github.sha }}.tar.gz"
