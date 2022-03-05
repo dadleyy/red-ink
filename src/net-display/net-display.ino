@@ -23,11 +23,26 @@ ThinkInk_290_Mono_M06 display(
   DISPLAY_BUSY_PIN
 );
 
+enum ELastDisplayReason {
+  None = 0,
+  ClientMessage = 1,
+  Idle = 2,
+  Disconnected = 3,
+};
+
+enum EConnectionChange {
+  UnchangedDisconnect = 0,
+  UnchangedConnected = 1,
+  EstablishedConnection = 2,
+  LostConnection = 3,
+};
+
 struct TFrameInfo {
   unsigned long last_reconnect;
   int last_connection_status;
   bool server_started;
 
+  ELastDisplayReason display_reason;
   char display_buffer [FRAME_BUFFER_SIZE];
   unsigned long display_time;
   unsigned long display_ready;
@@ -36,16 +51,10 @@ struct TFrameInfo {
   last_connection_status: WL_IDLE_STATUS,
   server_started: false,
 
+  display_reason: ELastDisplayReason::None,
   display_buffer: {'\0'},
   display_time: 0,
   display_ready: false,
-};
-
-enum EConnectionChange {
-  UnchangedDisconnect = 0,
-  UnchangedConnected = 1,
-  EstablishedConnection = 2,
-  LostConnection = 3,
 };
 
 void setup(void) {
@@ -154,15 +163,31 @@ void loop(void) {
   frame.last_connection_status =  WiFi.status();
 
   if (frame.last_connection_status != WL_CONNECTED || frame.server_started == false) {
-    frame.display_ready = true;
-    memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
-    memcpy(frame.display_buffer, "no-connection", 13);
+    // Only update the display if we didnt just render this message.
+    if (frame.display_reason != ELastDisplayReason::Disconnected) {
+      frame.display_ready = true;
+      frame.display_reason = ELastDisplayReason::Disconnected;
+      memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
+      memcpy(frame.display_buffer, "no-connection", 13);
+    }
+
     return;
   }
 
   WiFiClient client = server.available();
 
   if (!client) {
+    bool skip_clear =
+      (frame.display_reason == ELastDisplayReason::ClientMessage
+      && millis() - frame.display_time < MIN_NOMESSAGE_DISPLAY_WAIT)
+      || frame.display_reason == ELastDisplayReason::Idle;
+
+    // If we just rendered a client message and it hasnt been enough time to clear, do nothing.
+    if (skip_clear) {
+      return;
+    }
+
+    frame.display_reason = ELastDisplayReason::Idle;
     frame.display_ready = true;
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
     memcpy(frame.display_buffer, "no-client", 9);
@@ -214,6 +239,9 @@ void loop(void) {
   client.println("Connection: close");
   client.println();
   client.println("ok");
+
+  frame.display_reason = ELastDisplayReason::ClientMessage;
+  frame.display_ready = true;
 
   delay(10);
   client.stop();
