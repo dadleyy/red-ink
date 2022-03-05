@@ -1,0 +1,23 @@
+<main>
+  <div class="simple-text-form">
+    <label>
+      message:
+      <input
+        type="text"
+        placeholder=""
+        value={{this.state.message}}
+        disabled={{this.state.busy}}
+        {{on "input" this.setMessage}}
+        {{on "keypress" this.checked}}
+      />
+    </label>
+    <button
+      type="button"
+      role="button"
+      disabled={{this.state.busy}}
+      {{on "click" this.submit}}
+    >
+      {{if this.state.busy 'Sending...' 'Send'}}
+    </button>
+  </div>
+</main>
