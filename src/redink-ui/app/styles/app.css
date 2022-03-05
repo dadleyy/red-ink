@@ -70,12 +70,13 @@ main {
 .simple-text-form label {
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .simple-text-form input[type=text] {
   display: block;
-  min-width: 50rem;
   margin-left: 0.5rem;
+  flex: 1;
 }
 
 .simple-text-form button {
