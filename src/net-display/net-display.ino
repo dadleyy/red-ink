@@ -220,6 +220,8 @@ void loop(void) {
     // If we've already seen the http method and we're at a space, we just finished the path.
     if (method && !path && framebuffer[idx] == ' ') {
       path = true;
+      frame.display_reason = ELastDisplayReason::ClientMessage;
+      frame.display_ready = true;
       memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
       memcpy(frame.display_buffer, framebuffer + 1, idx);
     }
@@ -229,6 +231,8 @@ void loop(void) {
   }
 
   if (method == false || path == false) {
+    frame.display_reason = ELastDisplayReason::ClientMessage;
+    frame.display_ready = true;
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
     memcpy(frame.display_buffer, "bad", 3);
   }
@@ -239,9 +243,6 @@ void loop(void) {
   client.println("Connection: close");
   client.println();
   client.println("ok");
-
-  frame.display_reason = ELastDisplayReason::ClientMessage;
-  frame.display_ready = true;
 
   delay(10);
   client.stop();
