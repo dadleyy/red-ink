@@ -9,7 +9,7 @@ arduino-cli compile -v \
   -b adafruit:samd:adafruit_itsybitsy_m4 \
   --output-dir target/debug \
   --build-property "compiler.cpp.extra_flags=-I." \
-  src/net-display
+  src/redink
 
 if [[ "${1}" == "" ]]; then
   echo "Skipping upload. Provide port ('build.sh /dev/ttyACM0')"

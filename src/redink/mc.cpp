@@ -1,23 +1,23 @@
 #include "mc.h"
 
-netdisplay::Mc::Mc(int data, int clock, int mode): dot(1, data, clock, mode) {
+redink::Mc::Mc(int data, int clock, int mode): dot(1, data, clock, mode) {
 }
 
-void netdisplay::Mc::ok(void) {
+void redink::Mc::ok(void) {
   dot.clear();
   dot.setBrightness(60);
   dot.setPixelColor(0, Adafruit_DotStar::Color(0, 255, 0));
   dot.show();
 }
 
-void netdisplay::Mc::working(void) {
+void redink::Mc::working(void) {
   dot.clear();
   dot.setBrightness(60);
   dot.setPixelColor(0, Adafruit_DotStar::Color(0, 0, 255));
   dot.show();
 }
 
-void netdisplay::Mc::booting(unsigned int i) {
+void redink::Mc::booting(unsigned int i) {
   if (i == 0) {
     dot.begin();
   }
@@ -29,7 +29,7 @@ void netdisplay::Mc::booting(unsigned int i) {
   dot.show();
 }
 
-void netdisplay::Mc::failed(void) {
+void redink::Mc::failed(void) {
   dot.clear();
   dot.setBrightness(60);
   dot.setPixelColor(0, Adafruit_DotStar::Color(255, 0, 0));

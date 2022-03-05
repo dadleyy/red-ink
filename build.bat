@@ -4,7 +4,7 @@ arduino-cli compile -v^
   -b "adafruit:samd:adafruit_itsybitsy_m4"^
   --output-dir ".\target\debug"^
   --build-property "compiler.cpp.extra_flags='-I.'"^
-  ".\src\net-display"
+  ".\src\redink"
 
 IF %errorlevel% NEQ 0 EXIT /b %errorlevel%
 

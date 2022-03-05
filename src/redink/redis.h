@@ -1,7 +1,7 @@
-#ifndef _JOY_REDIS_H
-#define _JOY_REDIS_H 1
+#ifndef _REDINK_REDIS_H
+#define _REDINK_REDIS_H 1
 
-namespace netdisplay {
+namespace redink {
 
   enum ResponsePhase {
     Empty,

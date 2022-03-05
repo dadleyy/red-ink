@@ -1,9 +1,9 @@
-#ifndef _NET_DISPLAY_MC_H
-#define _NET_DISPLAY_MC_H
+#ifndef _REDINK_MC_H
+#define _REDINK_MC_H
 
 #include "Adafruit_DotStar.h"
 
-namespace netdisplay {
+namespace redink {
 
   class Mc {
     public:

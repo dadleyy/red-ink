@@ -16,7 +16,7 @@ const unsigned int MIN_RECONNECT_WAIT = 10000;
 const unsigned int MIN_QUERY_DELAY_TIME = 5000;
 const unsigned int MAX_QUERY_RESPONSE_LENGTH = 1048;
 
-netdisplay::Mc mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
+redink::Mc mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
 
 ThinkInk_290_Mono_M06 display(
   DISPLAY_DC_PIN,
@@ -112,17 +112,17 @@ void setup(void) {
   display.setCursor(0, 0);
   display.println(fv);
   display.print("MAC: ");
-  display.print(mac[5],HEX);
+  display.print(mac[5], HEX);
   display.print(":");
-  display.print(mac[4],HEX);
+  display.print(mac[4], HEX);
   display.print(":");
-  display.print(mac[3],HEX);
+  display.print(mac[3], HEX);
   display.print(":");
-  display.print(mac[2],HEX);
+  display.print(mac[2], HEX);
   display.print(":");
-  display.print(mac[1],HEX);
+  display.print(mac[1], HEX);
   display.print(":");
-  display.println(mac[0],HEX);
+  display.println(mac[0], HEX);
   display.display();
 
   mc.ok();
@@ -180,7 +180,7 @@ void loop(void) {
   frame.query_time = millis();
   WiFiClient client;
 
-  if (!client.connect(JOY_REDIS_HOST, JOY_REDIS_PORT)) {
+  if (!client.connect(REDINK_REDIS_HOST, REDINK_REDIS_PORT)) {
     mc.failed();
     frame.display_ready = true;
     frame.display_reason = ELastDisplayReason::Idle;
@@ -191,7 +191,7 @@ void loop(void) {
 
   mc.working();
 
-  client.println("*2\r\n$4\r\nLPOP\r\n$18\r\njoy_light:messages");
+  client.println("*2\r\n$4\r\nLPOP\r\n$15\r\nredink:messages");
   delay(100);
 
   unsigned int len = client.available();
@@ -200,7 +200,7 @@ void loop(void) {
     return;
   }
 
-  netdisplay::RedisResponse res;
+  redink::RedisResponse res;
   unsigned int idx = 0;
 
   while (idx < len && idx < MAX_QUERY_RESPONSE_LENGTH) {
@@ -255,7 +255,7 @@ EConnectionChange attemptConnect(void) {
     auto ssid = WiFi.SSID(i);
 
     // If this network does not match the one from our 'env.h', do nothing.
-    if (strcmp(ssid, JOY_WIFI_SSID) != 0) {
+    if (strcmp(ssid, REDINK_WIFI_SSID) != 0) {
       continue;
     }
 
@@ -273,7 +273,7 @@ EConnectionChange attemptConnect(void) {
     // Matching SSID connection loop.
     do {
       mc.working();
-      current_status = WiFi.begin(ssid, JOY_WIFI_PASSWORD);
+      current_status = WiFi.begin(ssid, REDINK_WIFI_PASSWORD);
 
       if (current_status != WL_CONNECTED) {
         display.clearBuffer();

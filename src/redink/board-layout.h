@@ -1,5 +1,5 @@
-#ifndef _BOARD_LAYOUT_H
-#define _BOARD_LAYOUT_H 1
+#ifndef _REDINK_BOARD_LAYOUT_H
+#define _REDINK_BOARD_LAYOUT_H 1
 
 #define WIFI_CS_PIN    A2
 #define WIFI_RESET_PIN A4

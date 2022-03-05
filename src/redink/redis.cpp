@@ -1,14 +1,14 @@
 #include "redis.h"
 #include <cstring>
 
-netdisplay::RedisResponse::RedisResponse():
+redink::RedisResponse::RedisResponse():
   _position(0),
   _content_len(0),
   _phase(ResponsePhase::Empty) {
   memset(_buffer, '\0', REDIS_FRAME_BUFFER_SIZE);
 }
 
-void netdisplay::RedisResponse::tick(char token) {
+void redink::RedisResponse::tick(char token) {
   // If we're currently in a terminal state, do nothing.
   if (_phase == ResponsePhase::Failed || _phase == ResponsePhase::Complete) {
     return;
@@ -72,7 +72,7 @@ void netdisplay::RedisResponse::tick(char token) {
   }
 }
 
-bool netdisplay::RedisResponse::consume(char * destination, unsigned int len) {
+bool redink::RedisResponse::consume(char * destination, unsigned int len) {
   if (_phase != ResponsePhase::Complete || _content_len == 0) {
     return false;
   }
@@ -84,6 +84,6 @@ bool netdisplay::RedisResponse::consume(char * destination, unsigned int len) {
   return true;
 }
 
-unsigned int netdisplay::RedisResponse::size(void) {
+unsigned int redink::RedisResponse::size(void) {
   return _content_len;
 }
