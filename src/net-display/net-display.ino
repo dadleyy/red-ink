@@ -5,15 +5,18 @@
 #include "board-layout.h"
 #include "env.h"
 #include "mc.h"
+#include "redis.h"
+
+const unsigned int BOOTING_PHASE_DELAY = 100;
 
 const unsigned int FRAME_BUFFER_SIZE = 1028;
-const unsigned int MIN_MESSAGE_DISPLAY_WAIT = 3000;
-const unsigned int MIN_NOMESSAGE_DISPLAY_WAIT = 10000;
 const unsigned int MIN_RECONNECT_WAIT = 10000;
 
-netdisplay::Mc mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
 
-WiFiServer server(8081);
+const unsigned int MIN_QUERY_DELAY_TIME = 5000;
+const unsigned int MAX_QUERY_RESPONSE_LENGTH = 1048;
+
+netdisplay::Mc mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
 
 ThinkInk_290_Mono_M06 display(
   DISPLAY_DC_PIN,
@@ -40,21 +43,23 @@ enum EConnectionChange {
 struct TFrameInfo {
   unsigned long last_reconnect;
   int last_connection_status;
-  bool server_started;
 
   ELastDisplayReason display_reason;
   char display_buffer [FRAME_BUFFER_SIZE];
   unsigned long display_time;
   unsigned long display_ready;
+
+  unsigned long query_time;
 } frame = {
   last_reconnect: 0,
   last_connection_status: WL_IDLE_STATUS,
-  server_started: false,
 
   display_reason: ELastDisplayReason::None,
   display_buffer: {'\0'},
   display_time: 0,
   display_ready: false,
+
+  query_time: 0,
 };
 
 void setup(void) {
@@ -66,7 +71,7 @@ void setup(void) {
   }
 
   mc.ok();
-  delay(500);
+  delay(BOOTING_PHASE_DELAY);
 
   mc.working();
   display.begin(THINKINK_MONO);
@@ -80,13 +85,13 @@ void setup(void) {
   display.display();
 
   mc.ok();
-  delay(500);
+  delay(BOOTING_PHASE_DELAY);
 
   mc.working();
   WiFi.setPins(WIFI_CS_PIN, WIFI_BUSY_PIN, WIFI_RESET_PIN, WIFI_GPIO_PIN, &SPI);
 
   mc.ok();
-  delay(500);
+  delay(BOOTING_PHASE_DELAY);
 
   mc.working();
   while (WiFi.status() == WL_NO_MODULE) {
@@ -95,7 +100,7 @@ void setup(void) {
   }
 
   mc.ok();
-  delay(500);
+  delay(BOOTING_PHASE_DELAY);
 
   mc.working();
   
@@ -121,7 +126,7 @@ void setup(void) {
   display.display();
 
   mc.ok();
-  delay(500);
+  delay(BOOTING_PHASE_DELAY);
 }
 
 void loop(void) {
@@ -136,12 +141,6 @@ void loop(void) {
   if (try_reconnect == true) {
     EConnectionChange result = attemptConnect();
     frame.last_reconnect = now;
-
-    // TODO: Unclear if 'server.begin()' needs to be called after new connection attempts.
-    if (result == EConnectionChange::EstablishedConnection && !frame.server_started) {
-      server.begin();
-      frame.server_started = true;
-    }
   }
 
   // Display check. See if our display buffer has a message, and if it has been long enough since
@@ -162,89 +161,63 @@ void loop(void) {
   // Update our connection status
   frame.last_connection_status =  WiFi.status();
 
-  if (frame.last_connection_status != WL_CONNECTED || frame.server_started == false) {
+  if (frame.last_connection_status != WL_CONNECTED) {
     // Only update the display if we didnt just render this message.
     if (frame.display_reason != ELastDisplayReason::Disconnected) {
       frame.display_ready = true;
       frame.display_reason = ELastDisplayReason::Disconnected;
       memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
-      memcpy(frame.display_buffer, "no-connection", 13);
+      memcpy(frame.display_buffer, "nc", 2);
     }
 
     return;
   }
 
-  WiFiClient client = server.available();
+  if (millis() - frame.query_time < MIN_QUERY_DELAY_TIME) {
+    return;
+  }
 
-  if (!client) {
-    bool skip_clear =
-      (frame.display_reason == ELastDisplayReason::ClientMessage
-      && millis() - frame.display_time < MIN_NOMESSAGE_DISPLAY_WAIT)
-      || frame.display_reason == ELastDisplayReason::Idle;
+  frame.query_time = millis();
+  WiFiClient client;
 
-    // If we just rendered a client message and it hasnt been enough time to clear, do nothing.
-    if (skip_clear) {
-      return;
-    }
-
+  if (!client.connect(JOY_REDIS_HOST, JOY_REDIS_PORT)) {
+    mc.failed();
+    frame.display_ready = true;
     frame.display_reason = ELastDisplayReason::Idle;
-    frame.display_ready = true;
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
-    memcpy(frame.display_buffer, "no-client", 9);
+    memcpy(frame.display_buffer, "fc", 2);
     return;
   }
 
-  // Attempt to receive up to some number of bytes from our client.
-  char framebuffer [255] = {'\0'};
-  bool method = false;
-  bool path = false;
-  int len = client.available();
-  int idx = 0;
-  while (len > 0 && idx < 255) {
-    framebuffer[idx] = client.read();
+  mc.working();
 
-    // If we have received a valid http message, take note and clear out our current
-    // framebuffer, starting back at 0;
-    if (idx == 2 && strcmp(framebuffer, "GET") == 0) {
-      method = true;
-      // Space delimeter should be next, just skip it.
-      client.read();
-      // Reset our current frame.
-      memset(framebuffer, '\0', 255);
-      idx = 0;
-      // We have technically read 2 bytes this iteration.
-      len = len - 2;
-      continue;
-    }
+  client.println("*2\r\n$4\r\nLPOP\r\n$18\r\njoy_light:messages");
+  delay(100);
 
-    // If we've already seen the http method and we're at a space, we just finished the path.
-    if (method && !path && framebuffer[idx] == ' ') {
-      path = true;
-      frame.display_reason = ELastDisplayReason::ClientMessage;
-      frame.display_ready = true;
-      memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
-      memcpy(frame.display_buffer, framebuffer + 1, idx);
-    }
+  unsigned int len = client.available();
 
-    idx++;
-    len--;
+  if (len == 0) {
+    return;
   }
 
-  if (method == false || path == false) {
-    frame.display_reason = ELastDisplayReason::ClientMessage;
+  netdisplay::RedisResponse res;
+  unsigned int idx = 0;
+
+  while (idx < len && idx < MAX_QUERY_RESPONSE_LENGTH) {
+    char next = client.read();
+    res.tick(next);
+    idx += 1;
+  }
+
+  mc.ok();
+
+  if (res.size() > 0) {
     frame.display_ready = true;
+    frame.display_reason = ELastDisplayReason::ClientMessage;
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
-    memcpy(frame.display_buffer, "bad", 3);
+    res.consume(frame.display_buffer, FRAME_BUFFER_SIZE - 1);
   }
 
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("Content-Length: 2");
-  client.println("Connection: close");
-  client.println();
-  client.println("ok");
-
-  delay(10);
   client.stop();
 }
 
