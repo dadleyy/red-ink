@@ -1,6 +1,11 @@
 use std::io::{Error, ErrorKind, Result};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Debug, Clone)]
+struct MessageResponse {
+  timestamp: chrono::DateTime<chrono::Utc>,
+}
 
 #[derive(Deserialize, Debug, Clone)]
 struct MessagePayload {
@@ -26,6 +31,11 @@ async fn push(mut request: tide::Request<State>) -> tide::Result {
     }
     Ok(payload) => payload,
   };
+
+  if payload.message.len() > 120 {
+    log::warn!("payload too large");
+    return Ok(tide::Response::builder(422).build());
+  }
 
   log::info!("pushing new message - '{}'", payload.message);
   let state = request.state();
@@ -53,7 +63,10 @@ async fn push(mut request: tide::Request<State>) -> tide::Result {
     Ok(result) => log::info!("successfully sent - {:?}", result),
   }
 
-  Ok("ok".into())
+  tide::Body::from_json(&MessageResponse {
+    timestamp: chrono::Utc::now(),
+  })
+  .map(|body| tide::Response::builder(200).body(body).build())
 }
 
 async fn missing(request: tide::Request<State>) -> tide::Result {

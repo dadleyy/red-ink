@@ -17,16 +17,25 @@ class MessageController extends Controller {
       return;
     }
 
+    if (message.length > 120) {
+      window.alert('Messages must be 120 characters or less');
+      return;
+    }
+
     this.state = State.setBusy(this.state || State.empty());
 
     try {
-      await fetch(`${config.apiURL}messages`, { method: 'POST', body: JSON.stringify({ message }) });
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      this.state = State.setMessage(this.state, '');
+      const conf = {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+        headers: { 'content-type': 'application/json' },
+      };
+      await fetch(`${config.apiURL}messages`, { ...conf });
     } catch (error) {
       console.error(error);
     }
 
+    this.state = State.setMessage(this.state, '');
     this.state = State.setReady(this.state);
   }
 
