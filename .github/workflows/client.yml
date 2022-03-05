@@ -10,7 +10,7 @@ jobs:
     env:
       REDINK_VERSION: "${{ github.sha }}"
       REDINK_UI_ROOT: "/redink"
-      REDINK_API_ROOT: "https://krumpled.com/redink/api/"
+      REDINK_API_ROOT: "/redink/api/"
     defaults:
       run:
         working-directory: src/redink-ui
