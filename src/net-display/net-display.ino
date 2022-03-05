@@ -4,9 +4,9 @@
 
 #include "board-layout.h"
 #include "env.h"
-
 #include "mc.h"
 
+const unsigned int FRAME_BUFFER_SIZE = 1028;
 const unsigned int MIN_MESSAGE_DISPLAY_WAIT = 3000;
 const unsigned int MIN_NOMESSAGE_DISPLAY_WAIT = 10000;
 const unsigned int MIN_RECONNECT_WAIT = 10000;
@@ -26,22 +26,19 @@ ThinkInk_290_Mono_M06 display(
 struct TFrameInfo {
   unsigned long last_reconnect;
   int last_connection_status;
-  unsigned char last_client_status;
   bool server_started;
 
-  unsigned long last_display_time;
-  unsigned long last_client_message_time;
-  char last_client_message [255];
+  char display_buffer [FRAME_BUFFER_SIZE];
+  unsigned long display_time;
+  unsigned long display_ready;
 } frame = {
   last_reconnect: 0,
   last_connection_status: WL_IDLE_STATUS,
-  last_client_status: 0,
   server_started: false,
 
-  last_display_time: 0,
-
-  last_client_message_time: 0,
-  last_client_message: {'\0'},
+  display_buffer: {'\0'},
+  display_time: 0,
+  display_ready: false,
 };
 
 enum EConnectionChange {
@@ -121,64 +118,61 @@ void setup(void) {
 void loop(void) {
   unsigned long now = millis();
 
-  bool reconnect_time = frame.last_reconnect == 0 || now - frame.last_reconnect > MIN_RECONNECT_WAIT;
+  // Connection check - if we haven't reconnected, or it has been a while and we are disconnected,
+  // we should attempt to reconnect now.
+  bool try_reconnect =
+    (frame.last_reconnect == 0 || now - frame.last_reconnect > MIN_RECONNECT_WAIT)
+    && frame.last_connection_status != WL_CONNECTED;
 
-  if (reconnect_time && frame.last_connection_status != WL_CONNECTED) {
+  if (try_reconnect == true) {
     EConnectionChange result = attemptConnect();
     frame.last_reconnect = now;
 
+    // TODO: Unclear if 'server.begin()' needs to be called after new connection attempts.
     if (result == EConnectionChange::EstablishedConnection && !frame.server_started) {
       server.begin();
       frame.server_started = true;
     }
   }
 
-  // If we have received a message, and it was debounced long enough, display the message.
-  if (frame.last_client_message_time > 0 && now - frame.last_client_message_time > MIN_MESSAGE_DISPLAY_WAIT) {
+  // Display check. See if our display buffer has a message, and if it has been long enough since
+  // the last time we updated the display.
+  bool has_render = now - frame.display_time > 1000 && frame.display_ready;
+  if (has_render == true) {
     display.clearBuffer();
     display.setCursor(0, 0);
-    display.print(frame.last_client_message);
+    display.print(frame.display_buffer);
     display.display();
 
-    // After displaying our message, reset the time and clear out our message.
-    frame.last_client_message_time = 0;
-    frame.last_display_time = millis();
-    memset(frame.last_client_message, '\0', 255);
+    // Clean up our display information.
+    memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
+    frame.display_ready = false;
+    frame.display_time = millis();
   }
 
   // Update our connection status
   frame.last_connection_status =  WiFi.status();
 
   if (frame.last_connection_status != WL_CONNECTED || frame.server_started == false) {
+    frame.display_ready = true;
+    memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
+    memcpy(frame.display_buffer, "no-connection", 13);
     return;
   }
 
   WiFiClient client = server.available();
 
   if (!client) {
-    // If there is no current connection, and it has been some time since we displayed a message, clear it and
-    // reset our connection status to off.
-    if (frame.last_display_time > 0 && millis() - frame.last_display_time > MIN_NOMESSAGE_DISPLAY_WAIT) {
-      if (frame.last_client_status == 1) {
-        display.clearBuffer();
-        display.setCursor(0, 0);
-        display.print("No Client");
-        display.display();
-      }
-
-      frame.last_client_status = 0;
-      frame.last_display_time = 0;
-    }
-
+    frame.display_ready = true;
+    memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
+    memcpy(frame.display_buffer, "no-client", 9);
     return;
   }
 
-  // Attempt to receive up to some number of bytes from our clientAttwempt.
+  // Attempt to receive up to some number of bytes from our client.
   char framebuffer [255] = {'\0'};
-
   bool method = false;
   bool path = false;
-
   int len = client.available();
   int idx = 0;
   while (len > 0 && idx < 255) {
@@ -188,22 +182,21 @@ void loop(void) {
     // framebuffer, starting back at 0;
     if (idx == 2 && strcmp(framebuffer, "GET") == 0) {
       method = true;
-
       // Space delimeter should be next, just skip it.
       client.read();
-
       // Reset our current frame.
       memset(framebuffer, '\0', 255);
       idx = 0;
-      
       // We have technically read 2 bytes this iteration.
       len = len - 2;
       continue;
     }
 
+    // If we've already seen the http method and we're at a space, we just finished the path.
     if (method && !path && framebuffer[idx] == ' ') {
       path = true;
-      memcpy(frame.last_client_message, framebuffer, idx);
+      memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
+      memcpy(frame.display_buffer, framebuffer + 1, idx);
     }
 
     idx++;
@@ -211,7 +204,8 @@ void loop(void) {
   }
 
   if (method == false || path == false) {
-    memcpy(frame.last_client_message, "Bad", 3);
+    memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
+    memcpy(frame.display_buffer, "bad", 3);
   }
 
   client.println("HTTP/1.1 200 OK");
@@ -222,13 +216,6 @@ void loop(void) {
   client.println("ok");
 
   delay(10);
-
-  // Update our state so we know on the next iteration that:
-  // 1. we had a client
-  // 2. the message was received at this point in time.
-  frame.last_client_status = 1;
-  frame.last_client_message_time = millis();
-
   client.stop();
 }
 
@@ -261,6 +248,7 @@ EConnectionChange attemptConnect(void) {
 
   mc.ok();
 
+  // Attempt to iterate over the number of wifi networks found, maximizing at a reasonable amount.
   for (unsigned char i = 0; i < 255 && i < count; i++) {
     auto ssid = WiFi.SSID(i);
 
