@@ -4,7 +4,8 @@
 
 #include "board-layout.h"
 #include "env.h"
-#include "mc.h"
+#include "lighting.h"
+#include "screen.h"
 #include "redis.h"
 
 const unsigned int BOOTING_PHASE_DELAY = 100;
@@ -12,13 +13,13 @@ const unsigned int BOOTING_PHASE_DELAY = 100;
 const unsigned int FRAME_BUFFER_SIZE = 1028;
 const unsigned int MIN_RECONNECT_WAIT = 10000;
 
-
-const unsigned int MIN_QUERY_DELAY_TIME = 5000;
+const unsigned int MIN_QUERY_DELAY_TIME = 2000;
 const unsigned int MAX_QUERY_RESPONSE_LENGTH = 1048;
 
-redink::Mc mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
+const char LPOP_CMD [] = "*2\r\n$4\r\nLPOP\r\n$15\r\nredink:messages";
 
-ThinkInk_290_Mono_M06 display(
+redink::Lighting mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
+redink::Screen screen(
   DISPLAY_DC_PIN,
   DISPLAY_RESET_PIN,
   DISPLAY_CS_PIN,
@@ -74,15 +75,8 @@ void setup(void) {
   delay(BOOTING_PHASE_DELAY);
 
   mc.working();
-  display.begin(THINKINK_MONO);
 
-  display.setTextColor(EPD_BLACK);
-  display.setTextSize(2);
-
-  display.clearBuffer();
-  display.setCursor(0, 0);
-  display.print("Preparing WiFi...");
-  display.display();
+  screen.view("preparing wifi...");
 
   mc.ok();
   delay(BOOTING_PHASE_DELAY);
@@ -103,28 +97,9 @@ void setup(void) {
   delay(BOOTING_PHASE_DELAY);
 
   mc.working();
-  
   byte mac[6];
   String fv = WiFi.firmwareVersion();
-  WiFi.macAddress(mac);
-
-  display.clearBuffer();
-  display.setCursor(0, 0);
-  display.println(fv);
-  display.print("MAC: ");
-  display.print(mac[5], HEX);
-  display.print(":");
-  display.print(mac[4], HEX);
-  display.print(":");
-  display.print(mac[3], HEX);
-  display.print(":");
-  display.print(mac[2], HEX);
-  display.print(":");
-  display.print(mac[1], HEX);
-  display.print(":");
-  display.println(mac[0], HEX);
-  display.display();
-
+  screen.view(fv.c_str());
   mc.ok();
   delay(BOOTING_PHASE_DELAY);
 }
@@ -147,10 +122,7 @@ void loop(void) {
   // the last time we updated the display.
   bool has_render = now - frame.display_time > 1000 && frame.display_ready;
   if (has_render == true) {
-    display.clearBuffer();
-    display.setCursor(0, 0);
-    display.print(frame.display_buffer);
-    display.display();
+    screen.view(frame.display_buffer);
 
     // Clean up our display information.
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
@@ -191,12 +163,13 @@ void loop(void) {
 
   mc.working();
 
-  client.println("*2\r\n$4\r\nLPOP\r\n$15\r\nredink:messages");
+  client.println(LPOP_CMD);
   delay(100);
 
   unsigned int len = client.available();
 
   if (len == 0) {
+    client.stop();
     return;
   }
 
@@ -223,28 +196,19 @@ void loop(void) {
 
 EConnectionChange attemptConnect(void) {
   //  Start by scanning for networks that match the SSID configured from our 'env.h' file.
-  display.clearBuffer();
-  display.setCursor(0, 0);
-  display.print("Scanning...");
-  display.display();
+  screen.view("scanning...");
 
   mc.working();
   unsigned long before = millis();
   int count = WiFi.scanNetworks();
   unsigned long after = millis();
 
-  display.clearBuffer();
-  display.setCursor(0, 0);
-  display.print("scan time:");
-  display.println(after - before);
+  screen.view("finished scan");
 
   // Start by scanning for networks that match the SSID configured from our 'env.h' file.
   if (count < 1) {
     mc.failed();
-    display.clearBuffer();
-    display.setCursor(0, 0);
-    display.println("Disconnected.");
-    display.display();
+    screen.view("disconnected");
     return EConnectionChange::UnchangedDisconnect;
   }
 
@@ -260,12 +224,7 @@ EConnectionChange attemptConnect(void) {
     }
 
     // At this point, we have a matching ssid, attempt to connect.
-    display.clearBuffer();
-    display.setCursor(0, 0);
-    display.print(i);
-    display.print(": ");
-    display.println(WiFi.SSID(i));
-    display.display();
+    screen.view(WiFi.SSID(i));
 
     unsigned char attempt = 0;
     int current_status = WL_IDLE_STATUS;
@@ -276,11 +235,7 @@ EConnectionChange attemptConnect(void) {
       current_status = WiFi.begin(ssid, REDINK_WIFI_PASSWORD);
 
       if (current_status != WL_CONNECTED) {
-        display.clearBuffer();
-        display.setCursor(0, 0);
-        display.print("Failed on #");
-        display.println(attempt);
-        display.display();
+        screen.view("failed connection");
       } else {
         mc.ok();
         // Here, we have successfully connected, drop out of the connection loop.
@@ -291,14 +246,12 @@ EConnectionChange attemptConnect(void) {
     } while (current_status != WL_CONNECTED && attempt++ < 10);
 
     // At this point, we found the matching connection loop and have attempted to connect.
-    display.clearBuffer();
-    display.setCursor(0, 0);
     if (current_status == WL_CONNECTED) {
-      display.println("Connected!");
+      screen.view("connected");
     } else {
-      display.println("Failed Connect");
+      screen.view("no connection");
     }
-    display.display();
+
     return current_status == WL_CONNECTED
       ? EConnectionChange::EstablishedConnection
       : EConnectionChange::LostConnection;
@@ -308,9 +261,6 @@ EConnectionChange attemptConnect(void) {
   // update the display and bow out.
 
   mc.failed();
-  display.clearBuffer();
-  display.setCursor(0, 0);
-  display.println("SSID Not Found.");
-  display.display();
+  screen.view("ssid not found");
   return EConnectionChange::UnchangedDisconnect;
 }

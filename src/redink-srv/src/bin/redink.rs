@@ -7,6 +7,12 @@ struct MessageResponse {
   timestamp: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Serialize, Debug, Clone)]
+struct StatusResponse {
+  timestamp: chrono::DateTime<chrono::Utc>,
+  size: i64,
+}
+
 #[derive(Deserialize, Debug, Clone)]
 struct MessagePayload {
   message: String,
@@ -49,7 +55,7 @@ async fn push(mut request: tide::Request<State>) -> tide::Result {
   match kramer::execute(
     &mut client,
     kramer::Command::List(kramer::ListCommand::Push(
-      (kramer::Side::Left, kramer::Insertion::Always),
+      (kramer::Side::Right, kramer::Insertion::Always),
       &state.redis.queue,
       kramer::Arity::One(&payload.message),
     )),
@@ -65,6 +71,43 @@ async fn push(mut request: tide::Request<State>) -> tide::Result {
 
   tide::Body::from_json(&MessageResponse {
     timestamp: chrono::Utc::now(),
+  })
+  .map(|body| tide::Response::builder(200).body(body).build())
+}
+
+async fn stat(request: tide::Request<State>) -> tide::Result {
+  let state = request.state();
+
+  let mut connection = match async_std::net::TcpStream::connect(&state.redis.addr).await {
+    Err(error) => {
+      log::warn!("unable to {error}");
+      return Ok(tide::Response::builder(500).build());
+    }
+    Ok(conn) => conn,
+  };
+
+  let size = match kramer::execute(
+    &mut connection,
+    kramer::Command::List::<&String, &String>(kramer::ListCommand::Len(&state.redis.queue)),
+  )
+  .await
+  .and_then(|response| match response {
+    kramer::Response::Item(kramer::ResponseValue::Integer(value)) => Ok(value),
+    unknown => {
+      log::warn!("bad response from redis - {:?}", unknown);
+      Err(Error::new(ErrorKind::Other, "bad-resposne"))
+    }
+  }) {
+    Err(error) => {
+      log::warn!("unable to query length - {error}");
+      return Ok(tide::Response::builder(500).build());
+    }
+    Ok(v) => v,
+  };
+
+  tide::Body::from_json(&StatusResponse {
+    timestamp: chrono::Utc::now(),
+    size: size,
   })
   .map(|body| tide::Response::builder(200).body(body).build())
 }
@@ -87,6 +130,7 @@ where
   app.at("/*").all(missing);
 
   app.at("/messages").post(push);
+  app.at("/status").get(stat);
 
   log::info!("main web thread running");
   app.listen(format!("{}", addr)).await

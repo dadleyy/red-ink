@@ -1,0 +1,13 @@
+application:
+  nav:
+    messages: 'Messages'
+    about: 'About'
+new_message:
+  send: 'Send'
+  sending: 'Sending...'
+  queued_messages: "Queued Message(s)"
+  loading_queue: "Loading..."
+  placeholder: 'Enter a message'
+errors:
+  unknown: "Something went wrong"
+close: "Ack"

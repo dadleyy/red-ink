@@ -1,85 +1,51 @@
-/* http://meyerweb.com/eric/tools/css/reset/
-   v2.0 | 20110126
-   License: none (public domain)
-*/
-
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed,
-figure, figcaption, footer, header, hgroup,
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	font: inherit;
-	vertical-align: baseline;
-}
-
-article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section {
-	display: block;
-}
-
-body {
-	line-height: 1;
-}
-
-ol, ul {
-	list-style: none;
-}
-
-blockquote, q {
-	quotes: none;
-}
-
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: '';
-	content: none;
-}
-
-table {
-	border-collapse: collapse;
-	border-spacing: 0;
-}
+@tailwind base;
+@tailwind utilities;
+@tailwind spacing;
+@tailwind components;
 
 body, html {
-  position: relative;
+  @apply relative;
   min-height: 100%;
   min-width: 100%;
+  @apply bg-stone-900 text-stone-400;
 }
 
-main {
-  padding: 1rem 1rem;
-}
-
-.simple-text-form {
-  display: flex;
-  align-items: center;
-}
-
-.simple-text-form label {
-  display: flex;
-  align-items: center;
+.fl-1 {
   flex: 1;
 }
 
-.simple-text-form input[type=text] {
-  display: block;
-  margin-left: 0.5rem;
-  flex: 1;
+.shadow-down {
+  box-shadow: inset 0px -1px rgba(0,0,0,0.80), 0px 1px rgba(255, 255, 255, 0.05);
 }
 
-.simple-text-form button {
-  display: block;
-  margin-left: 0.5rem;
+button:not(.text),
+input[type=text],
+textarea {
+  @apply rounded block;
+  @apply px-2 py-1;
+  resize: none;
+}
+
+textarea:not(:disabled),
+input[type=text]:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+input:disabled,
+button:disabled,
+textarea:disabled {
+  background-color: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: disabled;
+}
+
+button:not(:disabled):not(.text) {
+  @apply bg-sky-500;
+  @apply border border-solid border-sky-800;
+  @apply text-sky-100;
+}
+
+button:not(:disabled):not(.text):hover {
+  @apply bg-sky-600;
 }

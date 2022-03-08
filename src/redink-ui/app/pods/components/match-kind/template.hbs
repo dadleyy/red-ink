@@ -1,0 +1,10 @@
+{{yield
+  (from-entries
+    (array
+      (array
+        (camelize (if @kind.kind @kind.kind ''))
+        (component 'match-kind/yield' data=@kind.data)
+      )
+    )
+  )
+}}

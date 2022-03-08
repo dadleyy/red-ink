@@ -1,13 +1,12 @@
-#ifndef _REDINK_MC_H
-#define _REDINK_MC_H
+#ifndef _REDINK_LIGHTING_H
+#define _REDINK_LIGHTING_H
 
 #include "Adafruit_DotStar.h"
 
 namespace redink {
-
-  class Mc {
+  class Lighting {
     public:
-      Mc(int data, int clock, int mode);
+      Lighting(unsigned int, unsigned int, unsigned int);
 
       void ok(void);
       void working(void);

@@ -8,5 +8,6 @@ export default class Router extends EmberRouter {
 
 Router.map(function () {
   this.route('new-message');
+  this.route('about');
   this.route('missing', { path: '*' });
 });

@@ -3,7 +3,7 @@
 
 namespace redink {
 
-  enum ResponsePhase {
+  enum ERedisResponsePhase {
     Empty,
     ArrayLength,
     ArrayItemPrebuffer,
@@ -25,7 +25,7 @@ namespace redink {
       char _buffer [REDIS_FRAME_BUFFER_SIZE];
       unsigned int _position;
       unsigned int _content_len;
-      ResponsePhase _phase;
+      ERedisResponsePhase _phase;
   };
 
 }

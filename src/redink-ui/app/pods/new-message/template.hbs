@@ -1,23 +1,55 @@
-<main>
-  <div class="simple-text-form">
-    <label>
-      message:
-      <input
-        type="text"
-        placeholder=""
-        value={{this.state.message}}
+<main
+  class="mx-2 my-2 block relative"
+  {{did-insert this.poll}}
+  {{will-destroy this.cleanup}}
+>
+
+  <div class="flex flex-col justify-center items-center w-full">
+    <MatchKind @kind={{this.state.error}} as |when|>
+      <when.just as |error|>
+        <div class="px-2 py-2 bg-amber-600 text-amber-900 rounded flex items-center w-full">
+          <span data-message={{error.message}} class="block">{{t 'errors.unknown'}}</span>
+          <button
+            type="button"
+            role="button"
+            class="ml-auto cursor-pointer text"
+            {{on "click" this.clearError}}
+          >{{t 'close'}}</button>
+        </div>
+      </when.just>
+      <when.nothing>
+        <div class="py-8 flex flex-col justify-center text-center">
+          <MatchKind @kind={{this.state.count}} as |when|>
+            <when.nothing>
+              <div data-role="loading">{{t 'new_message.loading_queue'}}</div>
+            </when.nothing>
+            <when.just as |count|>
+              <div class="text-3xl" data-role="loaded-queue-count">{{count}}</div>
+              <div>{{t 'new_message.queued_messages'}}</div>
+            </when.just>
+          </MatchKind>
+        </div>
+      </when.nothing>
+    </MatchKind>
+
+    <label class="flex items-center fl-1 w-full block mt-4">
+      <textarea
+        placeholder={{t 'new_message.placeholder'}}
+        class="w-full h-40"
         disabled={{this.state.busy}}
+        value={{this.state.message}}
         {{on "input" this.setMessage}}
         {{on "keypress" this.checked}}
-      />
+      >{{this.state.message}}</textarea>
     </label>
     <button
       type="button"
       role="button"
-      disabled={{this.state.busy}}
+      class="mt-4 w-full h-20"
+      disabled={{or this.state.busy (not this.state.message.length)}}
       {{on "click" this.submit}}
     >
-      {{if this.state.busy 'Sending...' 'Send'}}
+      {{if this.state.busy (t 'new_message.sending') (t 'new_message.send')}}
     </button>
   </div>
 </main>

@@ -1,1 +1,12 @@
+<header class="px-2 mb-1 py-2 flex shadow-down bg-stone-900">
+  <aside class="ml-auto flex items-center">
+    <div class="block mr-2">
+      <LinkTo @route="new-message">{{t 'application.nav.messages'}}</LinkTo>
+    </div>
+    <div class="block">
+      <a href="https://github.com/dadleyy/redink" rel="noopener">{{ t 'application.nav.about'}}</a>
+    </div>
+  </aside>
+</header>
+
 {{outlet}}
