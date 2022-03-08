@@ -16,10 +16,18 @@ const unsigned int MIN_RECONNECT_WAIT = 10000;
 const unsigned int MIN_QUERY_DELAY_TIME = 2000;
 const unsigned int MAX_QUERY_RESPONSE_LENGTH = 1048;
 
-const char LPOP_CMD [] = "*2\r\n$4\r\nLPOP\r\n$15\r\nredink:messages";
+const char PROGMEM LPOP_CMD [] = "*2\r\n$4\r\nLPOP\r\n$15\r\nredink:messages";
+const char PROGMEM LED_OFF [] = "+led-off";
+const char PROGMEM LED_ON [] = "+led-on";
 
-const char LED_OFF [] = "+led-off";
-const char LED_ON [] = "+led-on";
+const char PROGMEM MESSAGE_PREPARING_WIFI [] = "preparing wifi...";
+const char PROGMEM MESSAGE_SCANNING [] = "scanning...";
+const char PROGMEM MESSAGE_FINISHED_SCAN [] = "scan complete";
+const char PROGMEM MESSAGE_DISCONNECTED [] = "disconnected";
+const char PROGMEM MESSAGE_FAILED_CONNECTION [] = "failed connection";
+const char PROGMEM MESSAGE_CONNECTED [] = "connected";
+const char PROGMEM MESSAGE_NO_CONNECTION [] = "no connection";
+const char PROGMEM MESSAGE_SSID_NOT_FOUND [] = "ssid not found";
 
 redink::Lighting mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
 redink::Screen screen(
@@ -79,7 +87,7 @@ void setup(void) {
 
   mc.working();
 
-  screen.view("preparing wifi...");
+  screen.view(MESSAGE_PREPARING_WIFI);
 
   mc.ok();
   delay(BOOTING_PHASE_DELAY);
@@ -161,6 +169,7 @@ void loop(void) {
     frame.display_reason = ELastDisplayReason::Idle;
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
     memcpy(frame.display_buffer, "fc", 2);
+    client.stop();
     return;
   }
 
@@ -205,19 +214,19 @@ void loop(void) {
 
 EConnectionChange attemptConnect(void) {
   //  Start by scanning for networks that match the SSID configured from our 'env.h' file.
-  screen.view("scanning...");
+  screen.view(MESSAGE_SCANNING);
 
   mc.working();
   unsigned long before = millis();
   int count = WiFi.scanNetworks();
   unsigned long after = millis();
 
-  screen.view("finished scan");
+  screen.view(MESSAGE_FINISHED_SCAN);
 
   // Start by scanning for networks that match the SSID configured from our 'env.h' file.
   if (count < 1) {
     mc.failed();
-    screen.view("disconnected");
+    screen.view(MESSAGE_DISCONNECTED);
     return EConnectionChange::UnchangedDisconnect;
   }
 
@@ -244,7 +253,7 @@ EConnectionChange attemptConnect(void) {
       current_status = WiFi.begin(ssid, REDINK_WIFI_PASSWORD);
 
       if (current_status != WL_CONNECTED) {
-        screen.view("failed connection");
+        screen.view(MESSAGE_FAILED_CONNECTION);
       } else {
         mc.ok();
         // Here, we have successfully connected, drop out of the connection loop.
@@ -256,9 +265,9 @@ EConnectionChange attemptConnect(void) {
 
     // At this point, we found the matching connection loop and have attempted to connect.
     if (current_status == WL_CONNECTED) {
-      screen.view("connected");
+      screen.view(MESSAGE_CONNECTED);
     } else {
-      screen.view("no connection");
+      screen.view(MESSAGE_NO_CONNECTION);
     }
 
     return current_status == WL_CONNECTED
@@ -270,6 +279,6 @@ EConnectionChange attemptConnect(void) {
   // update the display and bow out.
 
   mc.failed();
-  screen.view("ssid not found");
+  screen.view(MESSAGE_SSID_NOT_FOUND);
   return EConnectionChange::UnchangedDisconnect;
 }
