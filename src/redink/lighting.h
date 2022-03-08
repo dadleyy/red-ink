@@ -13,8 +13,11 @@ namespace redink {
       void failed(void);
       void booting(unsigned int);
 
+      void toggle(bool);
+
     private:
-      Adafruit_DotStar dot;
+      Adafruit_DotStar _dot;
+      bool _toggled;
   };
 
 }

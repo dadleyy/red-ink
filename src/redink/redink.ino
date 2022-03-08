@@ -18,6 +18,9 @@ const unsigned int MAX_QUERY_RESPONSE_LENGTH = 1048;
 
 const char LPOP_CMD [] = "*2\r\n$4\r\nLPOP\r\n$15\r\nredink:messages";
 
+const char LED_OFF [] = "+led-off";
+const char LED_ON [] = "+led-on";
+
 redink::Lighting mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
 redink::Screen screen(
   DISPLAY_DC_PIN,
@@ -189,6 +192,12 @@ void loop(void) {
     frame.display_reason = ELastDisplayReason::ClientMessage;
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
     res.consume(frame.display_buffer, FRAME_BUFFER_SIZE - 1);
+  }
+
+  if (strcmp(frame.display_buffer, LED_ON) == 0) {
+    mc.toggle(true);
+  } else if (strcmp(frame.display_buffer, LED_OFF) == 0) {
+    mc.toggle(false);
   }
 
   client.stop();
