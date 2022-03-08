@@ -73,6 +73,13 @@ REDIS_MESSAGE_QUEUE=redink:messages
 $ cargo run
 ```
 
+----
+
+| :video_camera: |
+| --- |
+| ![IMG_0696](https://user-images.githubusercontent.com/1545348/157158916-bed1ecfa-6968-49d5-8718-632c23f21276.gif) |
+
+
 [arduino-cli]: https://github.com/arduino/arduino-cli
 [emberjs]: https://emberjs.com/
 [nodejs]: https://nodejs.org/en/
