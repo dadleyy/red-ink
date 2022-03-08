@@ -8,6 +8,8 @@ import debugLogger from 'ember-debug-logger';
 import * as State from 'redink-ui/pods/new-message/state';
 
 const debug = debugLogger('controller:new-message');
+const POLL_DELAY = 1000;
+const MAX_MESSAGE_LENGTH = 120;
 
 class MessageController extends Controller {
   @tracked
@@ -21,7 +23,7 @@ class MessageController extends Controller {
       return;
     }
 
-    if (message.length > 120) {
+    if (message.length > MAX_MESSAGE_LENGTH) {
       window.alert('Messages must be 120 characters or less');
       return;
     }
@@ -43,7 +45,7 @@ class MessageController extends Controller {
 
     const cleared = State.setPoller(
       State.setMessage(this.state, ''),
-      later(() => this.poll(), 1000)
+      later(() => this.poll(), POLL_DELAY)
     );
     this.state = State.setReady(cleared);
   }
@@ -67,7 +69,7 @@ class MessageController extends Controller {
     next.poller.map(cancel);
     this.state = State.setPoller(
       next,
-      later(() => this.poll(), 1000)
+      later(() => this.poll(), POLL_DELAY)
     );
   }
 
@@ -90,7 +92,7 @@ class MessageController extends Controller {
     debug('preparing for next poll');
     this.state = State.setPoller(
       this.state,
-      later(() => this.poll(), 1000)
+      later(() => this.poll(), POLL_DELAY)
     );
   }
 
@@ -111,7 +113,7 @@ class MessageController extends Controller {
     next.poller.map(cancel);
     this.state = State.setPoller(
       next,
-      later(() => this.poll(), 1000)
+      later(() => this.poll(), POLL_DELAY)
     );
   }
 }
