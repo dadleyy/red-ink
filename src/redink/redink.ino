@@ -21,6 +21,7 @@ const char PROGMEM LED_OFF [] = "+led-off";
 const char PROGMEM LED_ON [] = "+led-on";
 
 const char PROGMEM MESSAGE_PREPARING_WIFI [] = "preparing wifi...";
+const char PROGMEM MESSAGE_WIFI_NOT_FOUND [] = "wifi module not found";
 const char PROGMEM MESSAGE_SCANNING [] = "scanning...";
 const char PROGMEM MESSAGE_FINISHED_SCAN [] = "scan complete";
 const char PROGMEM MESSAGE_DISCONNECTED [] = "disconnected";
@@ -101,6 +102,7 @@ void setup(void) {
   mc.working();
   while (WiFi.status() == WL_NO_MODULE) {
     mc.failed();
+    screen.view(MESSAGE_WIFI_NOT_FOUND);
     delay(1000);
   }
 

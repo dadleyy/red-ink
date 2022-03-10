@@ -2,8 +2,8 @@
 #define _REDINK_BOARD_LAYOUT_H 1
 
 #define WIFI_CS_PIN    A2
-#define WIFI_RESET_PIN A4
 #define WIFI_BUSY_PIN  A3
+#define WIFI_RESET_PIN A4
 #define WIFI_GPIO_PIN  -1
 
 #define DISPLAY_CS_PIN      7
