@@ -6,3 +6,5 @@
 *.map
 
 env.h
+
+*.blend1
