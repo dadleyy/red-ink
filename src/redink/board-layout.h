@@ -9,8 +9,8 @@
 #define DISPLAY_CS_PIN      7
 #define DISPLAY_DC_PIN      9
 #define DISPLAY_SRAM_CS_PIN 10
-#define DISPLAY_RESET_PIN   11
-#define DISPLAY_BUSY_PIN    12
+#define DISPLAY_RESET_PIN   12
+#define DISPLAY_BUSY_PIN    13
 
 #define DOTSTAR_DATA_PIN  8
 #define DOTSTAR_CLOCK_PIN 6

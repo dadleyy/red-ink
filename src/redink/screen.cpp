@@ -1,6 +1,11 @@
 #include "screen.h"
 
-redink::Screen::Screen(unsigned int dc, unsigned int reset, unsigned int cs, unsigned int sram, unsigned int busy):
+redink::Screen::Screen(
+    unsigned int dc,
+    unsigned int reset,
+    unsigned int cs,
+    unsigned int sram,
+    unsigned int busy):
   _display(dc, reset, cs, sram, busy),
   _booted(false) {
 }
@@ -8,7 +13,7 @@ redink::Screen::Screen(unsigned int dc, unsigned int reset, unsigned int cs, uns
 void redink::Screen::view(const char * message) {
   if (_booted == false) {
     _booted = true;
-    _display.begin(THINKINK_MONO);
+    _display.begin(THINKINK_TRICOLOR);
     _display.setTextColor(EPD_BLACK);
     _display.setTextSize(2);
   }

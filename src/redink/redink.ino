@@ -110,7 +110,6 @@ void setup(void) {
   delay(BOOTING_PHASE_DELAY);
 
   mc.working();
-  byte mac[6];
   String fv = WiFi.firmwareVersion();
   screen.view(fv.c_str());
   mc.ok();

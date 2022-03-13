@@ -11,7 +11,7 @@ namespace redink {
       void view(const char *);
 
     private:
-      ThinkInk_290_Mono_M06 _display;
+      ThinkInk_154_Tricolor_Z90 _display;
       bool _booted;
   };
 
