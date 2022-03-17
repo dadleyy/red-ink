@@ -1,8 +1,8 @@
 #include "lighting.h"
 
-redink::Lighting::Lighting(unsigned int data, unsigned int clock, unsigned int mode):
-  _dot(1, data, clock, mode),
-  _toggled(true) {
+redink::Lighting::Lighting(unsigned int busy):
+  _toggled(true),
+  _busy(busy) {
 }
 
 void redink::Lighting::ok(void) {
@@ -10,19 +10,14 @@ void redink::Lighting::ok(void) {
     return;
   }
 
-  _dot.clear();
-  _dot.setBrightness(60);
-  _dot.setPixelColor(0, Adafruit_DotStar::Color(0, 255, 0));
-  _dot.show();
+  digitalWrite(_busy, LOW);
 }
 
 void redink::Lighting::toggle(bool on) {
   _toggled = on;
 
   if (on == false) {
-    _dot.clear();
-    _dot.setBrightness(0);
-    _dot.show();
+    digitalWrite(_busy, LOW);
   }
 }
 
@@ -31,22 +26,15 @@ void redink::Lighting::working(void) {
     return;
   }
 
-  _dot.clear();
-  _dot.setBrightness(60);
-  _dot.setPixelColor(0, Adafruit_DotStar::Color(0, 0, 255));
-  _dot.show();
+  digitalWrite(_busy, HIGH);
 }
 
 void redink::Lighting::booting(unsigned int i) {
   if (i == 0) {
-    _dot.begin();
+    pinMode(_busy, OUTPUT);
   }
 
-  unsigned int based = i % 100;
-  unsigned int brightness = based > 50 ? 50 - (based - 50) : based;
-  _dot.setBrightness(brightness);
-  _dot.setPixelColor(0, Adafruit_DotStar::Color(255, 0, 0));
-  _dot.show();
+  digitalWrite(_busy, i % 2 == 0 ? HIGH : LOW);
 }
 
 void redink::Lighting::failed(void) {
@@ -54,8 +42,5 @@ void redink::Lighting::failed(void) {
     return;
   }
 
-  _dot.clear();
-  _dot.setBrightness(60);
-  _dot.setPixelColor(0, Adafruit_DotStar::Color(255, 0, 0));
-  _dot.show();
+  digitalWrite(_busy, HIGH);
 }

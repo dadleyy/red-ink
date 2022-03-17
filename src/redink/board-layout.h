@@ -1,18 +1,12 @@
 #ifndef _REDINK_BOARD_LAYOUT_H
 #define _REDINK_BOARD_LAYOUT_H 1
 
-#define WIFI_CS_PIN    A2
-#define WIFI_BUSY_PIN  A3
-#define WIFI_RESET_PIN A4
-#define WIFI_GPIO_PIN  -1
-
-#define DISPLAY_CS_PIN      7
-#define DISPLAY_DC_PIN      9
+#define DISPLAY_CS_PIN      21
+#define DISPLAY_DC_PIN      14
 #define DISPLAY_SRAM_CS_PIN 10
-#define DISPLAY_RESET_PIN   12
-#define DISPLAY_BUSY_PIN    13
+#define DISPLAY_RESET_PIN   33
+#define DISPLAY_BUSY_PIN    32
 
-#define DOTSTAR_DATA_PIN  8
-#define DOTSTAR_CLOCK_PIN 6
+#define LED_BUSY_PIN 2
 
 #endif

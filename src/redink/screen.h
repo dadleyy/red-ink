@@ -1,7 +1,7 @@
 #ifndef _REDINK_SCREEN_H
 #define _REDINK_SCREEN_H 1
 
-#include "Adafruit_ThinkInk.h"
+#include <GxEPD2_BW.h>
 
 namespace redink {
 
@@ -11,7 +11,7 @@ namespace redink {
       void view(const char *);
 
     private:
-      ThinkInk_154_Tricolor_Z90 _display;
+      GxEPD2_BW<GxEPD2_290_T94, GxEPD2_290_T94::HEIGHT> _display;
       bool _booted;
   };
 

@@ -4,9 +4,10 @@ A [redis] driven E-Ink Display thing.
 
 ### Components
 
-- [ItsyBitsy M4](https://www.adafruit.com/product/3800)
-- [Adafruit AirLift](https://www.adafruit.com/product/4201)
-- [2.9" E-ink Monochrome display](https://www.adafruit.com/product/4262)
+- [Teyleten ESP32-WROOM-32](https://www.amazon.com/gp/product/B08246MCL5)
+- [Waveshare 2.9" E-paper display](https://www.amazon.com/gp/product/B07P6MJPTD)
+
+(estimated cost: ~$31)
 
 ### Directories
 
@@ -78,6 +79,8 @@ $ cargo run
 | :video_camera: |
 | --- |
 | ![IMG_0696](https://user-images.githubusercontent.com/1545348/157158916-bed1ecfa-6968-49d5-8718-632c23f21276.gif) |
+
+[docs](/.docs/README.md)
 
 
 [arduino-cli]: https://github.com/arduino/arduino-cli

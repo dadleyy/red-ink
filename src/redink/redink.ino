@@ -1,6 +1,5 @@
 #include <SPI.h>
-#include <WiFiNINA.h>
-#include "Adafruit_ThinkInk.h"
+#include <WiFi.h>
 
 #include "board-layout.h"
 #include "env.h"
@@ -30,7 +29,7 @@ const char PROGMEM MESSAGE_CONNECTED [] = "connected";
 const char PROGMEM MESSAGE_NO_CONNECTION [] = "no connection";
 const char PROGMEM MESSAGE_SSID_NOT_FOUND [] = "ssid not found";
 
-redink::Lighting mc(DOTSTAR_DATA_PIN, DOTSTAR_CLOCK_PIN, DOTSTAR_BGR);
+redink::Lighting mc(LED_BUSY_PIN);
 redink::Screen screen(
   DISPLAY_DC_PIN,
   DISPLAY_RESET_PIN,
@@ -94,24 +93,8 @@ void setup(void) {
   delay(BOOTING_PHASE_DELAY);
 
   mc.working();
-  WiFi.setPins(WIFI_CS_PIN, WIFI_BUSY_PIN, WIFI_RESET_PIN, WIFI_GPIO_PIN, &SPI);
+  WiFi.mode(WIFI_STA);
 
-  mc.ok();
-  delay(BOOTING_PHASE_DELAY);
-
-  mc.working();
-  while (WiFi.status() == WL_NO_MODULE) {
-    mc.failed();
-    screen.view(MESSAGE_WIFI_NOT_FOUND);
-    delay(1000);
-  }
-
-  mc.ok();
-  delay(BOOTING_PHASE_DELAY);
-
-  mc.working();
-  String fv = WiFi.firmwareVersion();
-  screen.view(fv.c_str());
   mc.ok();
   delay(BOOTING_PHASE_DELAY);
 }
@@ -238,12 +221,12 @@ EConnectionChange attemptConnect(void) {
     auto ssid = WiFi.SSID(i);
 
     // If this network does not match the one from our 'env.h', do nothing.
-    if (strcmp(ssid, REDINK_WIFI_SSID) != 0) {
+    if (strcmp(ssid.c_str(), REDINK_WIFI_SSID) != 0) {
       continue;
     }
 
     // At this point, we have a matching ssid, attempt to connect.
-    screen.view(WiFi.SSID(i));
+    screen.view(ssid.c_str());
 
     unsigned char attempt = 0;
     int current_status = WL_IDLE_STATUS;
@@ -251,7 +234,7 @@ EConnectionChange attemptConnect(void) {
     // Matching SSID connection loop.
     do {
       mc.working();
-      current_status = WiFi.begin(ssid, REDINK_WIFI_PASSWORD);
+      current_status = WiFi.begin(REDINK_WIFI_SSID, REDINK_WIFI_PASSWORD);
 
       if (current_status != WL_CONNECTED) {
         screen.view(MESSAGE_FAILED_CONNECTION);

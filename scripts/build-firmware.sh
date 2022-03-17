@@ -6,7 +6,7 @@ if [[ `which arduino-cli` == "" ]]; then
 fi
 
 arduino-cli compile -v \
-  -b adafruit:samd:adafruit_itsybitsy_m4 \
+  -b esp32:esp32:featheresp32 \
   --output-dir target/debug \
   --build-property "compiler.cpp.extra_flags=-I." \
   src/redink
@@ -17,6 +17,6 @@ if [[ "${1}" == "" ]]; then
 fi
 
 arduino-cli upload -v \
-  -b adafruit:samd:adafruit_itsybitsy_m4 \
+  -b esp32:esp32:featheresp32 \
   -p "${1}" \
   --input-dir target/debug \
