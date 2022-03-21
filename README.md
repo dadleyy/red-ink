@@ -12,10 +12,11 @@ A [redis] driven E-Ink Display thing.
 ### Directories
 
 ```
-/scripts        <- useful build scripts (wraps 'arduino-cli')
-/src/redink     <- the arduino firmware for the ItsyBitsy
+/scripts        <- useful build scripts (wraps 'arduino-cli').
+/src/redink     <- the arduino firmware for the ItsyBitsy.
 /src/redink-srv <- the rust webserver for pushing messages.
 /src/redink-ui  <- an emberjs frontend for sending messages.
+/hardware       <- 3d printing related files for the enclosure.
 ```
 
 #### Development: Arduino/Firmware
@@ -73,6 +74,11 @@ REDIS_ADDR=0.0.0.0:6379
 REDIS_MESSAGE_QUEUE=redink:messages
 $ cargo run
 ```
+
+
+#### Printing
+
+See the [`hardware`](/hardware) directory readme for detailed info about the physical realm.
 
 ----
 

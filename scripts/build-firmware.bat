@@ -1,7 +1,7 @@
 @ECHO OFF
 
 arduino-cli compile -v^
-  -b "adafruit:samd:adafruit_itsybitsy_m4"^
+  -b "esp32:esp32:featheresp32"^
   --output-dir ".\target\debug"^
   --build-property "compiler.cpp.extra_flags='-I.'"^
   ".\src\redink"
@@ -14,4 +14,4 @@ IF "%1" == "" (
 )
 
 ECHO Attempting to upload to '%1'
-arduino-cli upload -v -p %1 -b "adafruit:samd:adafruit_itsybitsy_m4" --input-dir ".\target\debug"
+arduino-cli upload -v -p %1 -b "esp32:esp32:featheresp32" --input-dir ".\target\debug"
