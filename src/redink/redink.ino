@@ -77,9 +77,9 @@ struct TFrameInfo {
 void setup(void) {
   Serial.begin(9600);
 
-  for (unsigned int i = 0; i < 500; i++) {
+  for (unsigned int i = 0; i < 10; i++) {
     mc.booting(i);
-    delay(10);
+    delay(500);
   }
 
   mc.ok();
@@ -151,6 +151,7 @@ void loop(void) {
     mc.failed();
     frame.display_ready = true;
     frame.display_reason = ELastDisplayReason::Idle;
+
     memset(frame.display_buffer, '\0', FRAME_BUFFER_SIZE);
     memcpy(frame.display_buffer, "fc", 2);
     client.stop();
