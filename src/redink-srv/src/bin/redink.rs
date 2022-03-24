@@ -52,12 +52,15 @@ async fn push(mut request: tide::Request<State>) -> tide::Result {
     }
     Ok(client) => client,
   };
+
+  let wrapped = format!("{}({})", request.peer_addr().unwrap_or("n/a"), payload.message);
+
   match kramer::execute(
     &mut client,
     kramer::Command::List(kramer::ListCommand::Push(
       (kramer::Side::Right, kramer::Insertion::Always),
       &state.redis.queue,
-      kramer::Arity::One(&payload.message),
+      kramer::Arity::One(&wrapped),
     )),
   )
   .await
