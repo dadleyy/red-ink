@@ -8,6 +8,8 @@
 #include "redis.h"
 
 const unsigned int BOOTING_PHASE_DELAY = 100;
+const unsigned char BOOT_TICK_COUNT = 5;
+const unsigned int BOOT_TICK_DELAY = 1000;
 
 const unsigned int FRAME_BUFFER_SIZE = 1028;
 const unsigned int MIN_RECONNECT_WAIT = 10000;
@@ -75,11 +77,9 @@ struct TFrameInfo {
 };
 
 void setup(void) {
-  Serial.begin(9600);
-
-  for (unsigned int i = 0; i < 10; i++) {
+  for (unsigned int i = 0; i < BOOT_TICK_COUNT; i++) {
     mc.booting(i);
-    delay(500);
+    delay(BOOT_TICK_DELAY);
   }
 
   mc.ok();
